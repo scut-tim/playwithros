@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 from math import pow, atan2, sqrt
 import tf
 from tf.transformations import euler_from_quaternion
+from sensor_msgs.msg import LaserScan
 
 
 
@@ -22,10 +23,18 @@ class Mmbot:
         self.velocity_publisher = rospy.Publisher('cmd_vel',Twist,queue_size=5)
 
         self.pose_subscriber = rospy.Subscriber('/odom',Odometry,self.update_pose)
+
+        self.laser_subscriber = rospy.Subscriber('/scan',LaserScan,self.update_ranges)
         
         self.odometry = Odometry()
 
+        self.laser_scan = LaserScan()
+
         self.rate = rospy.Rate(1)
+
+    def update_ranges(self,data):
+
+        self.laser_scan = data
 
     def update_pose(self,data):
 
@@ -67,6 +76,8 @@ class Mmbot:
         """Moves the turtle to the goal."""
         goal_pose = Odometry()
 
+        
+
         # Get the input from the user.
         goal_pose.pose.pose.position.x = input("Set your x goal: ")
         goal_pose.pose.pose.position.y = input("Set your y goal: ")
@@ -78,7 +89,9 @@ class Mmbot:
 
         
         while self.euclidean_distance(goal_pose) >= distance_tolerance:
+            
 
+            r = self.laser_scan.ranges
             # Porportional controller.
             # https://en.wikipedia.org/wiki/Proportional_control
 
@@ -99,6 +112,12 @@ class Mmbot:
             vel_msg.angular.z = -self.angular_vel(goal_pose)
 
             # Publishing our vel_msg
+            if (r[4]<1):
+                vel_msg.angular.z = 2
+            elif(r[5]<1):
+                vel_msg.angular.z = -2
+            
+            
             
             self.velocity_publisher.publish(vel_msg)
 
@@ -121,4 +140,3 @@ if __name__ == '__main__':
         x.move2goal()
     except rospy.ROSInterruptException:
         pass
-

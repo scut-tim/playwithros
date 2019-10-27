@@ -16,7 +16,7 @@ class Mmbot:
 
         rospy.init_node('run_avoid',anonymous=True)
 
-        self.velocity_publisher = rospy.Publisher('cmd_vel',Twist,queue_size=5)
+        self.velocity_publisher = rospy.Publisher('/cmd_vel',Twist,queue_size=5)
 
         self.pose_subscriber = rospy.Subscriber('/scan',LaserScan,self.update_ranges)
         
